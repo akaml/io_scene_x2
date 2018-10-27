@@ -23,11 +23,14 @@ from math import radians, pi
 import bpy
 from mathutils import *
 
+DIRECTX_ANIMATION_FPS = 4800
 
 class DirectXExporter:
     def __init__(self, Config, context):
         self.Config = Config
         self.context = context
+
+        self.FpsMagnification = DIRECTX_ANIMATION_FPS // context.scene.render.fps
 
         self.Log("Begin verbose logging ----------\n")
 
@@ -1221,7 +1224,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.RotationKeys):
                         self.Exporter.File.Write(
                             "{};4;{:9f},{:9f},{:9f},{:9f};;".format(
-                            Frame, -Key[0], Key[1], Key[2], Key[3]))
+                            Frame * self.Exporter.FpsMagnification,
+                             -Key[0], Key[1], Key[2], Key[3]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)
@@ -1240,7 +1244,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.ScaleKeys):
                         self.Exporter.File.Write(
                             "{};3;{:9f},{:9f},{:9f};;".format(
-                            Frame, Key[0], Key[1], Key[2]))
+                            Frame * self.Exporter.FpsMagnification,
+                             Key[0], Key[1], Key[2]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)
@@ -1259,7 +1264,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.PositionKeys):
                         self.Exporter.File.Write(
                             "{};3;{:9f},{:9f},{:9f};;".format(
-                            Frame, Key[0], Key[1], Key[2]))
+                            Frame * self.Exporter.FpsMagnification,
+                             Key[0], Key[1], Key[2]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)

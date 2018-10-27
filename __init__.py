@@ -20,14 +20,13 @@
 
 bl_info = {
     "name": "DirectX X Format",
-    "author": "Chris Foster",
-    "version": (3, 1, 0),
-    "blender": (2, 77, 0),
+    "author": "Bibindon",
+    "version": (0, 0, 1),
+    "blender": (2, 79, 0),
     "location": "File > Export > DirectX (.x)",
-    "description": "Export mesh vertices, UV's, materials, textures, "
-                   "vertex colors, armatures, empties, and actions.",
-    "wiki_url": "http://wiki.blender.org/index.php/Extensions:2.6/Py/"
-                "Scripts/Import-Export/DirectX_Exporter",
+    "description": "For personally customizing and using, this addon was "
+                   "forked from official DirectX X format exporter"
+                   "(https://github.com/cdbfoster/io_scene_x).",
     "category": "Import-Export"}
 
 
@@ -37,7 +36,7 @@ from bpy.props import EnumProperty
 from bpy.props import StringProperty
 
 
-class ExportDirectX(bpy.types.Operator):
+class ExportDirectX2(bpy.types.Operator):
     """Export selection to DirectX"""
 
     bl_idname = "export_scene.x"
@@ -170,7 +169,7 @@ class ExportDirectX(bpy.types.Operator):
 
 
 def menu_func(self, context):
-    self.layout.operator(ExportDirectX.bl_idname, text="DirectX (.x)")
+    self.layout.operator(ExportDirectX2.bl_idname, text="DirectX (.x)")
 
 
 def register():

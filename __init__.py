@@ -29,6 +29,11 @@ bl_info = {
                    "(https://github.com/cdbfoster/io_scene_x).",
     "category": "Import-Export"}
 
+if "bpy" in locals():
+    import imp
+    imp.reload(export_x)
+else:
+    from . import export_x
 
 import bpy
 from bpy.props import BoolProperty
@@ -156,7 +161,6 @@ class ExportDirectX2(bpy.types.Operator):
     def execute(self, context):
         self.filepath = bpy.path.ensure_ext(self.filepath, ".x")
 
-        from . import export_x
         Exporter = export_x.DirectXExporter(self, context)
         Exporter.Export()
         return {'FINISHED'}

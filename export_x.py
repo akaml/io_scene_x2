@@ -1080,7 +1080,10 @@ class GenericAnimationGenerator(AnimationGenerator):
         CurrentAnimation = Animation(self.ExportObject.SafeName)
         BlenderObject = self.ExportObject.BlenderObject
 
-        for Frame in range(Scene.frame_start, Scene.frame_end + 1):
+        TimeSection = \
+            bpy.context.selected_objects[0].animation_data.action.frame_range
+
+        for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)
 
             Rotation = BlenderObject.rotation_euler.to_quaternion()
@@ -1143,7 +1146,10 @@ class ArmatureAnimationGenerator(GenericAnimationGenerator):
         BoneAnimations = [Animation(ArmatureSafeName + "_" + \
             Util.SafeName(Bone.name)) for Bone in ArmatureObject.pose.bones]
 
-        for Frame in range(Scene.frame_start, Scene.frame_end + 1):
+        TimeSection = \
+            bpy.context.selected_objects[0].animation_data.action.frame_range
+
+        for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)
 
             for Bone, BoneAnimation in \

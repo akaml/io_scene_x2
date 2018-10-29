@@ -689,7 +689,7 @@ class MeshExportObject(ExportObject):
                     TextureFileName))
 
             Exporter.File.Unindent()
-            Exporter.File.Write("}\n");
+            Exporter.File.Write("}\n")
 
         Materials = Mesh.materials
         # Do not write materials if there are none
@@ -1223,7 +1223,7 @@ class AnimationWriter:
                     KeyCount = CurrentAnimation.GetKeyCount()
 
                     # Write rotation keys
-                    self.Exporter.File.Write("AnimationKey { // Rotation\n");
+                    self.Exporter.File.Write("AnimationKey { // Rotation\n")
                     self.Exporter.File.Indent()
                     self.Exporter.File.Write("0;\n")
                     self.Exporter.File.Write("{};\n".format(KeyCount))
@@ -1243,7 +1243,7 @@ class AnimationWriter:
                     self.Exporter.File.Write("}\n")
 
                     # Write scale keys
-                    self.Exporter.File.Write("AnimationKey { // Scale\n");
+                    self.Exporter.File.Write("AnimationKey { // Scale\n")
                     self.Exporter.File.Indent()
                     self.Exporter.File.Write("1;\n")
                     self.Exporter.File.Write("{};\n".format(KeyCount))
@@ -1263,7 +1263,7 @@ class AnimationWriter:
                     self.Exporter.File.Write("}\n")
 
                     # Write position keys
-                    self.Exporter.File.Write("AnimationKey { // Position\n");
+                    self.Exporter.File.Write("AnimationKey { // Position\n")
                     self.Exporter.File.Indent()
                     self.Exporter.File.Write("2;\n")
                     self.Exporter.File.Write("{};\n".format(KeyCount))
@@ -1300,7 +1300,7 @@ class AnimationWriter:
         # Calculate the integer frame rate
         FrameRate = int(Scene.render.fps / Scene.render.fps_base)
 
-        self.Exporter.File.Write("AnimTicksPerSecond {\n");
+        self.Exporter.File.Write("AnimTicksPerSecond {\n")
         self.Exporter.File.Indent()
         self.Exporter.File.Write("{};\n".format(FrameRate))
         self.Exporter.File.Unindent()

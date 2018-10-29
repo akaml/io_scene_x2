@@ -49,6 +49,22 @@ class ExportDirectX2(bpy.types.Operator):
 
     filepath = StringProperty(subtype='FILE_PATH')
 
+    def execute(self, context):
+        self.filepath = bpy.path.ensure_ext(self.filepath, ".x")
+
+        Exporter = export_x.DirectXExporter(self, context)
+        Exporter.Export()
+        return {'FINISHED'}
+
+    def invoke(self, context, event):
+        if not self.filepath:
+            self.filepath = bpy.path.ensure_ext(bpy.data.filepath, ".x")
+        context.window_manager.fileselect_add(self)
+        return {'RUNNING_MODAL'}
+
+class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
+    bl_idname = __name__
+
     # Export options
 
     SelectedOnly = BoolProperty(
@@ -158,18 +174,28 @@ class ExportDirectX2(bpy.types.Operator):
             "output",
         default=False)
 
-    def execute(self, context):
-        self.filepath = bpy.path.ensure_ext(self.filepath, ".x")
+    def draw(self, context):
+        layout = self.layout
 
-        Exporter = export_x.DirectXExporter(self, context)
-        Exporter.Export()
-        return {'FINISHED'}
-
-    def invoke(self, context, event):
-        if not self.filepath:
-            self.filepath = bpy.path.ensure_ext(bpy.data.filepath, ".x")
-        context.window_manager.fileselect_add(self)
-        return {'RUNNING_MODAL'}
+        layout.prop(self, "SelectedOnly")
+        layout.prop(self, "CoordinateSystem")
+        layout.prop(self, "UpAxis")
+        layout.prop(self, "ExportMeshes")
+        layout.prop(self, "ExportNormals")
+        layout.prop(self, "FlipNormals")
+        layout.prop(self, "ExportUVCoordinates")
+        layout.prop(self, "ExportMaterials")
+        layout.prop(self, "ExportActiveImageMaterials")
+        layout.prop(self, "ExportVertexColors")
+        layout.prop(self, "ExportSkinWeights")
+        layout.prop(self, "ApplyModifiers")
+        layout.prop(self, "ExportArmatureBones")
+        layout.prop(self, "ExportRestBone")
+        layout.prop(self, "ExportAnimation")
+        layout.prop(self, "IncludeFrameRate")
+        layout.prop(self, "ExportActionsAsSets")
+        layout.prop(self, "AttachToFirstArmature")
+        layout.prop(self, "Verbose")
 
 
 def menu_func(self, context):

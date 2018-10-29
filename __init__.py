@@ -177,7 +177,7 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
     def draw(self, context):
         layout = self.layout
 
-        layout.prop(self, "SelectOnly")
+        layout.prop(self, "SelectedOnly")
         layout.prop(self, "CoordinateSystem")
         layout.prop(self, "UpAxis")
         layout.prop(self, "ExportMeshes")

@@ -22,6 +22,7 @@ from math import radians, pi
 
 import bpy
 from mathutils import *
+import time
 
 DIRECTX_ANIMATION_FPS = 4800
 
@@ -30,6 +31,7 @@ class DirectXExporter:
         self.Config = Config
         self.context = context
         self.Prefs = context.user_preferences.addons["io_scene_x2"].preferences
+        self.StartTime = time.time()
 
         self.FpsMagnification = DIRECTX_ANIMATION_FPS // context.scene.render.fps
 
@@ -136,7 +138,9 @@ class DirectXExporter:
 
         self.Log("Closing file...")
         self.File.Close()
-        self.Log("Done")
+
+        ProcessingTime = time.time() - self.StartTime
+        self.Log("Done:{0:3.3f}".format(ProcessingTime) + "[sec]")
 
     def Log(self, String, MessageVerbose=True):
         if self.Prefs.Verbose is True or MessageVerbose == False:
@@ -1330,12 +1334,14 @@ class File:
         self.FilePath = FilePath
         self.File = None
         self.__Whitespace = 0
+        self.Lines = []
 
     def Open(self):
         if not self.File:
             self.File = open(self.FilePath, 'w')
 
     def Close(self):
+        self.File.write("".join(self.Lines))
         self.File.close()
         self.File = None
 
@@ -1344,9 +1350,9 @@ class File:
             # Escape any formatting braces
             String = String.replace("{", "{{")
             String = String.replace("}", "}}")
-            self.File.write(("{}" + String).format("  " * self.__Whitespace))
+            self.Lines.append(("{}" + String).format("  " * self.__Whitespace))
         else:
-            self.File.write(String)
+            self.Lines.append(String)
 
     def Indent(self, Levels=1):
         self.__Whitespace += Levels

@@ -163,8 +163,8 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
         default=False)
 
     AttachToFirstArmature = BoolProperty(
-        name="        Attach Unused Actions to First Armature",
-        description="Export each unused action as if used by the first "\
+        name="        Attach NLA track Actions to First Armature",
+        description="Export NLA track actions as if used by the first "\
             "armature object",
         default=False)
 

@@ -233,7 +233,7 @@ template SkinWeights {\n\
                             Object.BlenderObject.animation_data.action.name),
                         Object))
 
-            # If we should export unused actions as if the first armature was
+            # If we should export NLA track actions as if the first armature was
             # using them,
             if self.Prefs.AttachToFirstArmature:
                 # Find the first armature
@@ -244,16 +244,20 @@ template SkinWeights {\n\
                         break
 
                 if FirstArmature is not None:
-                    # Determine which actions are not used
-                    UsedActions = [BlenderObject.animation_data.action
-                        for BlenderObject in bpy.data.objects
-                        if BlenderObject.animation_data is not None]
-                    FreeActions = [Action for Action in bpy.data.actions
-                        if Action not in UsedActions]
+                    # Determine which actions are NLA track ones.
+                    NLATracks = [Track for Track in self.context.
+                        selected_objects[0].animation_data.nla_tracks if
+                        Track.name.find('[Action Stash]') != 0]
+
+                    NLAActions = []
+                    for Track in NLATracks:
+                        for Action in bpy.data.actions:
+                            if Action.name == Track.strips[0].name:
+                                NLAActions.append(Action)
 
                     # If the first armature has no action, remove it from the
                     # actionless objects so it doesn't end up in Default_Action
-                    if FirstArmature in ActionlessObjects and len(FreeActions):
+                    if FirstArmature in ActionlessObjects and len(NLAActions):
                         ActionlessObjects.remove(FirstArmature)
 
                     # Keep track of the first armature's animation data so we
@@ -267,8 +271,8 @@ template SkinWeights {\n\
                         NoData = True
                         FirstArmature.BlenderObject.animation_data_create()
 
-                    # Build a generator for each unused action
-                    for Action in FreeActions:
+                    # Build a generator for each NLA track action
+                    for Action in NLAActions:
                         FirstArmature.BlenderObject.animation_data.action = \
                             Action
 
@@ -1084,8 +1088,8 @@ class GenericAnimationGenerator(AnimationGenerator):
         CurrentAnimation = Animation(self.ExportObject.SafeName)
         BlenderObject = self.ExportObject.BlenderObject
 
-        TimeSection = \
-            bpy.context.selected_objects[0].animation_data.action.frame_range
+        Index = bpy.data.actions.find(CurrentAnimation.SafeName)
+        TimeSection = bpy.data.actions[Index].frame_range
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)

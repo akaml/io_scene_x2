@@ -1088,8 +1088,8 @@ class GenericAnimationGenerator(AnimationGenerator):
         CurrentAnimation = Animation(self.ExportObject.SafeName)
         BlenderObject = self.ExportObject.BlenderObject
 
-        TimeSection = \
-            bpy.context.selected_objects[0].animation_data.action.frame_range
+        Index = bpy.data.actions.find(CurrentAnimation.SafeName)
+        TimeSection = bpy.data.actions[Index].frame_range
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)

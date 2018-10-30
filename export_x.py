@@ -233,7 +233,7 @@ template SkinWeights {\n\
                             Object.BlenderObject.animation_data.action.name),
                         Object))
 
-            # If we should export unused actions as if the first armature was
+            # If we should export NLA track actions as if the first armature was
             # using them,
             if self.Prefs.AttachToFirstArmature:
                 # Find the first armature
@@ -271,7 +271,7 @@ template SkinWeights {\n\
                         NoData = True
                         FirstArmature.BlenderObject.animation_data_create()
 
-                    # Build a generator for each unused action
+                    # Build a generator for each NLA track action
                     for Action in NLAActions:
                         FirstArmature.BlenderObject.animation_data.action = \
                             Action

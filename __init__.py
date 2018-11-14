@@ -27,6 +27,7 @@ bl_info = {
     "description": "For personally customizing and using, this addon was "
                    "forked from official DirectX X format exporter"
                    "(https://github.com/cdbfoster/io_scene_x).",
+    "support": "TESTING",
     "category": "Import-Export"}
 
 if "bpy" in locals():
@@ -162,10 +163,9 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
             "together into a single set",
         default=False)
 
-    AttachToFirstArmature = BoolProperty(
-        name="        Attach NLA track Actions to First Armature",
-        description="Export NLA track actions as if used by the first "\
-            "armature object",
+    ExportNLATrackAction = BoolProperty(
+        name="        Export NLA track Actions",
+        description="Export NLA track actions",
         default=False)
 
     Verbose = BoolProperty(
@@ -194,7 +194,7 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
         layout.prop(self, "ExportAnimation")
         layout.prop(self, "IncludeFrameRate")
         layout.prop(self, "ExportActionsAsSets")
-        layout.prop(self, "AttachToFirstArmature")
+        layout.prop(self, "ExportNLATrackAction")
         layout.prop(self, "Verbose")
 
 

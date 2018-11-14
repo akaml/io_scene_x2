@@ -208,34 +208,22 @@ template SkinWeights {\n\
                         None, Object))
         # Otherwise,
         else:
-            # Keep track of which objects have no action.  These will be
-            # lumped together in a Default_Action AnimationSet.
-            ActionlessObjects = []
-
             for Object in self.ExportList:
-                if Object.BlenderObject.animation_data is None:
-                    ActionlessObjects.append(Object)
-                    continue
-                else:
-                    if Object.BlenderObject.animation_data.action is None:
-                        ActionlessObjects.append(Object)
-                        continue
+                if not self.Prefs.ExportNLATrackAction:
+                    # If an object has an action, build its appropriate
+                    # generator
+                    if Object.BlenderObject.type == 'ARMATURE':
+                        Generators.append(ArmatureAnimationGenerator(
+                            self.Prefs, Util.SafeName(Object.BlenderObject.
+                            animation_data.action.name),Object))
+                    else:
+                        Generators.append(GenericAnimationGenerator(
+                            self.Prefs, Util.SafeName(Object.BlenderObject.
+                            animation_data.action.name),Object))
 
-                # If an object has an action, build its appropriate generator
-                if Object.BlenderObject.type == 'ARMATURE':
-                    Generators.append(ArmatureAnimationGenerator(self.Prefs,
-                        Util.SafeName(
-                            Object.BlenderObject.animation_data.action.name),
-                        Object))
-                else:
-                    Generators.append(GenericAnimationGenerator(self.Prefs,
-                        Util.SafeName(
-                            Object.BlenderObject.animation_data.action.name),
-                        Object))
-
-            # If we should export NLA track actions as if the first armature was
-            # using them,
-            if self.Prefs.AttachToFirstArmature:
+            # If we should export NLA track actions as if the first armature
+            # was using them,
+            if self.Prefs.ExportNLATrackAction:
                 # Find the first armature
                 FirstArmature = None
                 for Object in self.ExportList:
@@ -243,23 +231,25 @@ template SkinWeights {\n\
                         FirstArmature = Object
                         break
 
-                if FirstArmature is not None:
-                    # Determine which actions are NLA track ones.
-                    NLATracks = [Track for Track in self.context.
-                        selected_objects[0].animation_data.nla_tracks if
-                        Track.name.find('[Action Stash]') != 0]
+                # Determine which actions are NLA track ones.
+                NLATracks = [Track for Track in self.context.
+                    selected_objects[0].animation_data.nla_tracks if
+                    Track.name.find('[Action Stash]') != 0]
 
-                    NLAActions = []
-                    for Track in NLATracks:
-                        for Action in bpy.data.actions:
-                            if Action.name == Track.strips[0].name:
-                                NLAActions.append(Action)
+                NLAActions = []
+                for Track in NLATracks:
+                    for Action in bpy.data.actions:
+                        if Action.name == Track.strips[0].name:
+                            NLAActions.append(Action)
 
-                    # If the first armature has no action, remove it from the
-                    # actionless objects so it doesn't end up in Default_Action
-                    if FirstArmature in ActionlessObjects and len(NLAActions):
-                        ActionlessObjects.remove(FirstArmature)
+                if FirstArmature is None:
+                    Mesh = self.ExportList[0]
+                    for Action in NLAActions:
+                        Mesh.BlenderObject.animation_data.action = Action
 
+                        Generators.append(GenericAnimationGenerator(
+                            self.Prefs, Util.SafeName(Action.name), Mesh))
+                else:
                     # Keep track of the first armature's animation data so we
                     # can restore it after export
                     OldAction = None
@@ -286,11 +276,6 @@ template SkinWeights {\n\
 
                     if NoData:
                         FirstArmature.BlenderObject.animation_data_clear()
-
-            # Build a special generator for all actionless objects
-            if len(ActionlessObjects):
-                Generators.append(GroupAnimationGenerator(self.Prefs,
-                    "Default_Action", ActionlessObjects))
 
         return Generators
 
@@ -1088,8 +1073,11 @@ class GenericAnimationGenerator(AnimationGenerator):
         CurrentAnimation = Animation(self.ExportObject.SafeName)
         BlenderObject = self.ExportObject.BlenderObject
 
-        Index = bpy.data.actions.find(CurrentAnimation.SafeName)
-        TimeSection = bpy.data.actions[Index].frame_range
+        if self.SafeName != None :
+            Index = bpy.data.actions.find(self.SafeName)
+            TimeSection = bpy.data.actions[Index].frame_range
+        else :
+            TimeSection = (Scene.frame_start, Scene.frame_end + 1)
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)
@@ -1154,8 +1142,8 @@ class ArmatureAnimationGenerator(GenericAnimationGenerator):
         BoneAnimations = [Animation(ArmatureSafeName + "_" + \
             Util.SafeName(Bone.name)) for Bone in ArmatureObject.pose.bones]
 
-        TimeSection = \
-            bpy.context.selected_objects[0].animation_data.action.frame_range
+        Index = bpy.data.actions.find(self.SafeName)
+        TimeSection = bpy.data.actions[Index].frame_range
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)

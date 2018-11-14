@@ -1368,9 +1368,10 @@ class Util:
         import string
 
         NewName = ReplaceSet(Name, string.punctuation + " ", "_")
-        if NewName[0].isdigit() or NewName in ["ARRAY", "DWORD", "UCHAR",
-            "FLOAT", "ULONGLONG", "BINARY_RESOURCE", "SDWORD", "UNICODE",
-            "CHAR", "STRING", "WORD", "CSTRING", "SWORD", "DOUBLE", "TEMPLATE"]:
+        if NewName[0].isdigit() or NewName.upper() in ["ARRAY", "DWORD",
+            "UCHAR", "FLOAT", "ULONGLONG", "BINARY_RESOURCE", "SDWORD",
+            "UNICODE", "CHAR", "STRING", "WORD", "CSTRING", "SWORD", "DOUBLE",
+            "TEMPLATE"]:
             NewName = "_" + NewName
         return NewName
 

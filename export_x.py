@@ -23,6 +23,7 @@ from math import radians, pi
 import bpy
 from mathutils import *
 import time
+from copy import copy
 
 DIRECTX_ANIMATION_FPS = 4800
 
@@ -1075,7 +1076,8 @@ class GenericAnimationGenerator(AnimationGenerator):
 
         if self.SafeName != None :
             Index = bpy.data.actions.find(self.SafeName)
-            TimeSection = bpy.data.actions[Index].frame_range
+            TimeSection = copy(bpy.data.actions[Index].frame_range)
+            TimeSection[1] = TimeSection[1]+1
         else :
             TimeSection = (Scene.frame_start, Scene.frame_end + 1)
 
@@ -1143,7 +1145,8 @@ class ArmatureAnimationGenerator(GenericAnimationGenerator):
             Util.SafeName(Bone.name)) for Bone in ArmatureObject.pose.bones]
 
         Index = bpy.data.actions.find(self.SafeName)
-        TimeSection = bpy.data.actions[Index].frame_range
+        TimeSection = copy(bpy.data.actions[Index].frame_range)
+        TimeSection[1] = TimeSection[1]+1
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
             Scene.frame_set(Frame)

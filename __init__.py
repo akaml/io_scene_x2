@@ -18,9 +18,13 @@
 
 # <pep8 compliant>
 
+import bpy
+from bpy.props import StringProperty, BoolProperty, EnumProperty
+from . import export_x
+
 bl_info = {
     "name": "DirectX X Format",
-    "author": "Bibindon",
+    "author": "Bibindon, fx137",
     "version": (0, 0, 2),
     "blender": (2, 80, 0),
     "location": "File > Export > DirectX (.x)",
@@ -33,14 +37,6 @@ bl_info = {
 if "bpy" in locals():
     import imp
     imp.reload(export_x)
-else:
-    from . import export_x
-
-import bpy
-from bpy.props import BoolProperty
-from bpy.props import EnumProperty
-from bpy.props import StringProperty
-
 
 class ExportDirectX2(bpy.types.Operator):
     """Export selection to DirectX"""
@@ -62,6 +58,7 @@ class ExportDirectX2(bpy.types.Operator):
             self.filepath = bpy.path.ensure_ext(bpy.data.filepath, ".x")
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
+
 
 class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
     bl_idname = __name__
@@ -114,7 +111,7 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
 
     ExportActiveImageMaterials = BoolProperty(
         name="        Reference Active Images as Textures",
-        description="Reference the active image of each face as a texture, "\
+        description="Reference the active image of each face as a texture, "
             "as opposed to the image assigned to the material",
         default=False)
 
@@ -140,26 +137,26 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
 
     ExportRestBone = BoolProperty(
         name="    Export Rest Position",
-        description="Export bones in their rest position (recommended for "\
+        description="Export bones in their rest position (recommended for "
             "animation)",
         default=False)
 
     ExportAnimation = BoolProperty(
         name="Export Animations",
-        description="Export object and bone animations.  Data is exported for "\
+        description="Export object and bone animations.  Data is exported for "
             "every frame",
         default=False)
 
     IncludeFrameRate = BoolProperty(
         name="    Include Frame Rate",
-        description="Include the AnimTicksPerSecond template which is "\
+        description="Include the AnimTicksPerSecond template which is "
             "used by some engines to control animation speed",
         default=False)
 
     ExportActionsAsSets = BoolProperty(
         name="    Export Actions as AnimationSets",
-        description="Export each action of each object as a separate "\
-            "AnimationSet. Otherwise all current actions are lumped "\
+        description="Export each action of each object as a separate "
+            "AnimationSet. Otherwise all current actions are lumped "
             "together into a single set",
         default=False)
 
@@ -170,7 +167,7 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
 
     Verbose = BoolProperty(
         name="Verbose",
-        description="Run the exporter in debug mode. Check the console for "\
+        description="Run the exporter in debug mode. Check the console for "
             "output",
         default=False)
 
@@ -199,19 +196,18 @@ class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
 
 
 def menu_func(self, context):
-    self.layout.operator(ExportDirectX2.bl_idname, text="DirectX (.x)")
+    self.layout.operator(ExportDirectX2.bl_idname,
+                         text="DirectX (.x)").filepath = "*.x"
 
 
 def register():
-    bpy.utils.register_module(__name__)
-
-    bpy.types.INFO_MT_file_export.append(menu_func)
+    bpy.utils.register_class(ExportDirectX2)
+    bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
 
 def unregister():
-    bpy.utils.unregister_module(__name__)
-
-    bpy.types.INFO_MT_file_export.remove(menu_func)
+    bpy.utils.unregister_class(ExportDirectX2)
+    bpy.types.TOPBAR_MT_file_export.remove(menu_func)
 
 
 if __name__ == "__main__":

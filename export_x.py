@@ -27,6 +27,7 @@ from copy import copy
 
 DIRECTX_ANIMATION_FPS = 4800
 
+
 class DirectXExporter:
     def __init__(self, Config, context):
         self.Config = Config
@@ -66,15 +67,15 @@ class DirectXExporter:
                 ExportMap[Object] = EmptyExportObject(self.Prefs, self, Object)
             elif Object.type == 'MESH':
                 ExportMap[Object] = MeshExportObject(self.Prefs, self,
-                    Object)
+                                                     Object)
             elif Object.type == 'ARMATURE':
                 ExportMap[Object] = ArmatureExportObject(self.Prefs, self,
-                    Object)
+                                                         Object)
 
         # Find the objects who do not have a parent or whose parent we are
         # not exporting
         self.RootExportList = [Object for Object in ExportMap.values()
-            if Object.BlenderObject.parent not in ExportList]
+                               if Object.BlenderObject.parent not in ExportList]
         self.RootExportList = Util.SortByNameField(self.RootExportList)
 
         self.ExportList = Util.SortByNameField(ExportMap.values())
@@ -98,17 +99,17 @@ class DirectXExporter:
             # Split the data up into animation sets based on user options
             if self.Prefs.ExportActionsAsSets:
                 self.AnimationWriter = SplitSetAnimationWriter(self.Prefs,
-                    self, AnimationGenerators)
+                                                               self, AnimationGenerators)
             else:
                 self.AnimationWriter = JoinedSetAnimationWriter(self.Prefs,
-                    self, AnimationGenerators)
+                                                                self, AnimationGenerators)
             self.Log("Done")
 
     # "Public" Interface
 
     def Export(self):
         self.Log("Exporting to {}".format(self.File.FilePath),
-            MessageVerbose=False)
+                 MessageVerbose=False)
 
         # Export everything
         self.Log("Opening file...")
@@ -203,10 +204,10 @@ template SkinWeights {\n\
             for Object in self.ExportList:
                 if Object.BlenderObject.type == 'ARMATURE':
                     Generators.append(ArmatureAnimationGenerator(self.Prefs,
-                        None, Object))
+                                                                 None, Object))
                 else:
                     Generators.append(GenericAnimationGenerator(self.Prefs,
-                        None, Object))
+                                                                None, Object))
         # Otherwise,
         else:
             for Object in self.ExportList:
@@ -216,11 +217,11 @@ template SkinWeights {\n\
                     if Object.BlenderObject.type == 'ARMATURE':
                         Generators.append(ArmatureAnimationGenerator(
                             self.Prefs, Util.SafeName(Object.BlenderObject.
-                            animation_data.action.name),Object))
+                                                      animation_data.action.name), Object))
                     else:
                         Generators.append(GenericAnimationGenerator(
                             self.Prefs, Util.SafeName(Object.BlenderObject.
-                            animation_data.action.name),Object))
+                                                      animation_data.action.name), Object))
 
             # If we should export NLA track actions as if the first armature
             # was using them,
@@ -234,8 +235,8 @@ template SkinWeights {\n\
 
                 # Determine which actions are NLA track ones.
                 NLATracks = [Track for Track in self.context.
-                    selected_objects[0].animation_data.nla_tracks if
-                    Track.name.find('[Action Stash]') != 0]
+                             selected_objects[0].animation_data.nla_tracks if
+                             Track.name.find('[Action Stash]') != 0]
 
                 NLAActions = []
                 for Track in NLATracks:
@@ -281,13 +282,15 @@ template SkinWeights {\n\
         return Generators
 
 # This class wraps a Blender object and writes its data to the file
-class ExportObject: # Base class, do not use
+
+
+class ExportObject:  # Base class, do not use
     def __init__(self, Prefs, Exporter, BlenderObject):
         self.Prefs = Prefs
         self.Exporter = Exporter
         self.BlenderObject = BlenderObject
 
-        self.name = self.BlenderObject.name # Simple alias
+        self.name = self.BlenderObject.name  # Simple alias
         self.SafeName = Util.SafeName(self.BlenderObject.name)
         self.Children = []
 
@@ -327,6 +330,8 @@ class ExportObject: # Base class, do not use
             Child.Write()
 
 # Simple decorator implemenation for ExportObject.  Used by empty objects
+
+
 class EmptyExportObject(ExportObject):
     def __init__(self, Prefs, Exporter, BlenderObject):
         ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
@@ -335,6 +340,8 @@ class EmptyExportObject(ExportObject):
         return "[EmptyExportObject: {}]".format(self.name)
 
 # Mesh object implementation of ExportObject
+
+
 class MeshExportObject(ExportObject):
     def __init__(self, Prefs, Exporter, BlenderObject):
         ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
@@ -362,22 +369,22 @@ class MeshExportObject(ExportObject):
                 # armature modifiers to the mesh
                 if self.Prefs.ExportSkinWeights:
                     DeactivatedModifierList = [Modifier
-                        for Modifier in self.BlenderObject.modifiers
-                        if Modifier.type == 'ARMATURE' and \
-                        Modifier.show_viewport]
+                                               for Modifier in self.BlenderObject.modifiers
+                                               if Modifier.type == 'ARMATURE' and
+                                               Modifier.show_viewport]
 
                 for Modifier in DeactivatedModifierList:
                     Modifier.show_viewport = False
 
                 Mesh = self.BlenderObject.to_mesh(self.Exporter.context.scene,
-                    True, 'PREVIEW')
+                                                  True, 'PREVIEW')
 
                 # Restore the deactivated modifiers
                 for Modifier in DeactivatedModifierList:
                     Modifier.show_viewport = True
             else:
                 Mesh = self.BlenderObject.to_mesh(self.Exporter.context.scene,
-                    False, 'PREVIEW')
+                                                  False, 'PREVIEW')
             self.Exporter.Log("Done")
 
             self.__WriteMesh(Mesh)
@@ -418,7 +425,7 @@ class MeshExportObject(ExportObject):
             self.vertices = Mesh.vertices
 
             self.PolygonVertexIndices = tuple(tuple(Polygon.vertices)
-                for Polygon in Mesh.polygons)
+                                              for Polygon in Mesh.polygons)
 
     # Duplicates each vertex for each face
     class _UnrolledFacesMeshEnumerator(_MeshEnumerator):
@@ -428,14 +435,14 @@ class MeshExportObject(ExportObject):
             self.vertices = []
             for Polygon in Mesh.polygons:
                 self.vertices += [Mesh.vertices[VertexIndex]
-                    for VertexIndex in Polygon.vertices]
+                                  for VertexIndex in Polygon.vertices]
             self.vertices = tuple(self.vertices)
 
             self.PolygonVertexIndices = []
             Index = 0
             for Polygon in Mesh.polygons:
                 self.PolygonVertexIndices.append(tuple(range(Index,
-                    Index + len(Polygon.vertices))))
+                                                             Index + len(Polygon.vertices))))
                 Index += len(Polygon.vertices)
 
     # "Private" Methods
@@ -449,8 +456,9 @@ class MeshExportObject(ExportObject):
         MeshEnumerator = None
         if (self.Prefs.ExportUVCoordinates and Mesh.uv_textures) or \
             (self.Prefs.ExportVertexColors and Mesh.vertex_colors) or \
-            (self.Prefs.ExportSkinWeights):
-            MeshEnumerator = MeshExportObject._UnrolledFacesMeshEnumerator(Mesh)
+                (self.Prefs.ExportSkinWeights):
+            MeshEnumerator = MeshExportObject._UnrolledFacesMeshEnumerator(
+                Mesh)
         else:
             MeshEnumerator = MeshExportObject._OneToOneMeshEnumerator(Mesh)
 
@@ -460,7 +468,7 @@ class MeshExportObject(ExportObject):
         for Index, Vertex in enumerate(MeshEnumerator.vertices):
             Position = Vertex.co
             self.Exporter.File.Write("{:9f};{:9f};{:9f};".format(
-                        Position[0], Position[1], Position[2]))
+                Position[0], Position[1], Position[2]))
 
             if Index == VertexCount - 1:
                 self.Exporter.File.Write(";\n", Indent=False)
@@ -471,7 +479,7 @@ class MeshExportObject(ExportObject):
         PolygonCount = len(MeshEnumerator.PolygonVertexIndices)
         self.Exporter.File.Write("{};\n".format(PolygonCount))
         for Index, PolygonVertexIndices in \
-            enumerate(MeshEnumerator.PolygonVertexIndices):
+                enumerate(MeshEnumerator.PolygonVertexIndices):
 
             self.Exporter.File.Write("{};".format(len(PolygonVertexIndices)))
 
@@ -479,14 +487,14 @@ class MeshExportObject(ExportObject):
                 PolygonVertexIndices = PolygonVertexIndices[::-1]
 
             for VertexCountIndex, VertexIndex in \
-                enumerate(PolygonVertexIndices):
+                    enumerate(PolygonVertexIndices):
 
                 if VertexCountIndex == len(PolygonVertexIndices) - 1:
                     self.Exporter.File.Write("{};".format(VertexIndex),
-                        Indent=False)
+                                             Indent=False)
                 else:
                     self.Exporter.File.Write("{},".format(VertexIndex),
-                        Indent=False)
+                                             Indent=False)
 
             if Index == PolygonCount - 1:
                 self.Exporter.File.Write(";\n", Indent=False)
@@ -509,8 +517,8 @@ class MeshExportObject(ExportObject):
         if self.Prefs.ExportMaterials:
             self.Exporter.Log("Writing mesh materials...")
             if self.Prefs.ExportActiveImageMaterials:
-                self.Exporter.Log("Referencing active images instead of "\
-                    "material image textures.")
+                self.Exporter.Log("Referencing active images instead of "
+                                  "material image textures.")
                 self.__WriteMeshActiveImageMaterials(Mesh)
             else:
                 self.__WriteMeshMaterials(Mesh)
@@ -527,7 +535,8 @@ class MeshExportObject(ExportObject):
             self.Exporter.Log("Done")
 
         self.Exporter.File.Unindent()
-        self.Exporter.File.Write("}} // End of {} mesh\n".format(self.SafeName))
+        self.Exporter.File.Write(
+            "}} // End of {} mesh\n".format(self.SafeName))
 
     def __WriteMeshNormals(self, Mesh, MeshEnumerator=None):
         # Since mesh normals only need their face counts and vertices per face
@@ -573,7 +582,7 @@ class MeshExportObject(ExportObject):
                 Normal = -1.0 * Vertex.normal
 
             self.Exporter.File.Write("{:9f};{:9f};{:9f};".format(Normal[0],
-                Normal[1], Normal[2]))
+                                                                 Normal[1], Normal[2]))
 
             if Index == NormalCount - 1:
                 self.Exporter.File.Write(";\n", Indent=False)
@@ -592,10 +601,10 @@ class MeshExportObject(ExportObject):
             for VertexCountIndex, VertexIndex in enumerate(Polygon):
                 if VertexCountIndex == len(Polygon) - 1:
                     self.Exporter.File.Write("{};".format(VertexIndex),
-                        Indent=False)
+                                             Indent=False)
                 else:
                     self.Exporter.File.Write("{},".format(VertexIndex),
-                        Indent=False)
+                                             Indent=False)
 
             if Index == FaceCount - 1:
                 self.Exporter.File.Write(";\n", Indent=False)
@@ -610,8 +619,8 @@ class MeshExportObject(ExportObject):
         if not Mesh.uv_textures:
             return
 
-        self.Exporter.File.Write("MeshTextureCoords {{ // {} UV coordinates\n" \
-            .format(self.SafeName))
+        self.Exporter.File.Write("MeshTextureCoords {{ // {} UV coordinates\n"
+                                 .format(self.SafeName))
         self.Exporter.File.Indent()
 
         UVCoordinates = Mesh.uv_layers.active.data
@@ -626,11 +635,11 @@ class MeshExportObject(ExportObject):
         for Polygon in Mesh.polygons:
             Vertices = []
             for Vertex in [UVCoordinates[Vertex] for Vertex in
-                Polygon.loop_indices]:
+                           Polygon.loop_indices]:
                 Vertices.append(tuple(Vertex.uv))
             for Vertex in Vertices:
                 self.Exporter.File.Write("{:9f};{:9f};".format(Vertex[0],
-                    1.0 - Vertex[1]))
+                                                               1.0 - Vertex[1]))
                 Index += 1
                 if Index == VertexCount:
                     self.Exporter.File.Write(";\n", Indent=False)
@@ -647,13 +656,13 @@ class MeshExportObject(ExportObject):
                 if Material:
                     # Create a list of Textures that have type 'IMAGE'
                     ImageTextures = [Material.texture_slots[TextureSlot].texture
-                        for TextureSlot in Material.texture_slots.keys()
-                        if Material.texture_slots[TextureSlot].texture.type ==
-                        'IMAGE']
+                                     for TextureSlot in Material.texture_slots.keys()
+                                     if Material.texture_slots[TextureSlot].texture.type ==
+                                     'IMAGE']
                     # Refine to only image file names if applicable
                     ImageFiles = [bpy.path.basename(Texture.image.filepath)
-                        for Texture in ImageTextures
-                        if getattr(Texture.image, "source", "") == 'FILE']
+                                  for Texture in ImageTextures
+                                  if getattr(Texture.image, "source", "") == 'FILE']
                     if ImageFiles:
                         return ImageFiles[0]
                 return None
@@ -663,18 +672,18 @@ class MeshExportObject(ExportObject):
             Exporter.File.Indent()
 
             Diffuse = list(Vector(Material.diffuse_color) *
-                Material.diffuse_intensity)
+                           Material.diffuse_intensity)
             Diffuse.append(Material.alpha)
             # Map Blender's range of 1 - 511 to 0 - 1000
             Specularity = 1000 * (Material.specular_hardness - 1.0) / 510.0
             Specular = list(Vector(Material.specular_color) *
-                Material.specular_intensity)
+                            Material.specular_intensity)
 
             Exporter.File.Write("{:9f};{:9f};{:9f};{:9f};;\n".format(Diffuse[0],
-                Diffuse[1], Diffuse[2], Diffuse[3]))
+                                                                     Diffuse[1], Diffuse[2], Diffuse[3]))
             Exporter.File.Write(" {:9f};\n".format(Specularity))
             Exporter.File.Write("{:9f};{:9f};{:9f};;\n".format(Specular[0],
-                Specular[1], Specular[2]))
+                                                               Specular[1], Specular[2]))
             Exporter.File.Write(" 0.000000; 0.000000; 0.000000;;\n")
 
             TextureFileName = GetMaterialTextureFileName(Material)
@@ -691,7 +700,7 @@ class MeshExportObject(ExportObject):
             return
 
         self.Exporter.File.Write("MeshMaterialList {{ // {} material list\n".
-            format(self.SafeName))
+                                 format(self.SafeName))
         self.Exporter.File.Indent()
 
         self.Exporter.File.Write("{};\n".format(len(Materials)))
@@ -713,7 +722,7 @@ class MeshExportObject(ExportObject):
 
     def __WriteMeshActiveImageMaterials(self, Mesh):
         def WriteMaterial(Exporter, MaterialKey):
-            #Unpack key
+            # Unpack key
             Material, Image = MaterialKey
 
             Exporter.File.Write("Material {} {{\n".format(
@@ -721,18 +730,18 @@ class MeshExportObject(ExportObject):
             Exporter.File.Indent()
 
             Diffuse = list(Vector(Material.diffuse_color) *
-                Material.diffuse_intensity)
+                           Material.diffuse_intensity)
             Diffuse.append(Material.alpha)
             # Map Blender's range of 1 - 511 to 0 - 1000
             Specularity = 1000 * (Material.specular_hardness - 1.0) / 510.0
             Specular = list(Vector(Material.specular_color) *
-                Material.specular_intensity)
+                            Material.specular_intensity)
 
             Exporter.File.Write("{:9f};{:9f};{:9f};{:9f};;\n".format(Diffuse[0],
-                Diffuse[1], Diffuse[2], Diffuse[3]))
+                                                                     Diffuse[1], Diffuse[2], Diffuse[3]))
             Exporter.File.Write(" {:9f};\n".format(Specularity))
             Exporter.File.Write("{:9f};{:9f};{:9f};;\n".format(Specular[0],
-                Specular[1], Specular[2]))
+                                                               Specular[1], Specular[2]))
             Exporter.File.Write(" 0.000000; 0.000000; 0.000000;;\n")
 
             if Image is not None:
@@ -756,16 +765,16 @@ class MeshExportObject(ExportObject):
             return
 
         self.Exporter.File.Write("MeshMaterialList {{ // {} material list\n".
-            format(self.SafeName))
+                                 format(self.SafeName))
         self.Exporter.File.Indent()
 
         from array import array
-        MaterialIndices = array("I", [0]) * len(Mesh.polygons) # Fast allocate
+        MaterialIndices = array("I", [0]) * len(Mesh.polygons)  # Fast allocate
         MaterialIndexMap = {}
 
         for Index, Polygon in enumerate(Mesh.polygons):
             MaterialKey = GetMaterialKey(Materials[Polygon.material_index],
-                Mesh.uv_textures.active, Index)
+                                         Mesh.uv_textures.active, Index)
 
             if MaterialKey in MaterialIndexMap:
                 MaterialIndices[Index] = MaterialIndexMap[MaterialKey]
@@ -804,11 +813,11 @@ class MeshExportObject(ExportObject):
         # Gather the colors of each vertex
         VertexColorLayer = Mesh.vertex_colors.active
         VertexColors = [VertexColorLayer.data[Index].color for Index in
-            range(0,len(MeshEnumerator.vertices))]
+                        range(0, len(MeshEnumerator.vertices))]
         VertexColorCount = len(VertexColors)
 
-        self.Exporter.File.Write("MeshVertexColors {{ // {} vertex colors\n" \
-            .format(self.SafeName))
+        self.Exporter.File.Write("MeshVertexColors {{ // {} vertex colors\n"
+                                 .format(self.SafeName))
         self.Exporter.File.Indent()
         self.Exporter.File.Write("{};\n".format(VertexColorCount))
 
@@ -830,32 +839,32 @@ class MeshExportObject(ExportObject):
         # This contains vertex indices and weights for the vertices that belong
         # to this bone's group.  Also calculates the bone skin matrix.
         class _BoneVertexGroup:
-                def __init__(self, BlenderObject, ArmatureObject, BoneName):
-                    self.BoneName = BoneName
-                    self.SafeName = Util.SafeName(ArmatureObject.name) + "_" + \
-                        Util.SafeName(BoneName)
+            def __init__(self, BlenderObject, ArmatureObject, BoneName):
+                self.BoneName = BoneName
+                self.SafeName = Util.SafeName(ArmatureObject.name) + "_" + \
+                    Util.SafeName(BoneName)
 
-                    self.Indices = []
-                    self.Weights = []
+                self.Indices = []
+                self.Weights = []
 
-                    # BoneMatrix transforms mesh vertices into the
-                    # space of the bone.
-                    # Here are the final transformations in order:
-                    #  - Object Space to World Space
-                    #  - World Space to Armature Space
-                    #  - Armature Space to Bone Space
-                    # This way, when BoneMatrix is transformed by the bone's
-                    # Frame matrix, the vertices will be in their final world
-                    # position.
+                # BoneMatrix transforms mesh vertices into the
+                # space of the bone.
+                # Here are the final transformations in order:
+                #  - Object Space to World Space
+                #  - World Space to Armature Space
+                #  - Armature Space to Bone Space
+                # This way, when BoneMatrix is transformed by the bone's
+                # Frame matrix, the vertices will be in their final world
+                # position.
 
-                    self.BoneMatrix = ArmatureObject.data.bones[BoneName] \
-                        .matrix_local.inverted()
-                    self.BoneMatrix *= ArmatureObject.matrix_world.inverted()
-                    self.BoneMatrix *= BlenderObject.matrix_world
+                self.BoneMatrix = ArmatureObject.data.bones[BoneName] \
+                    .matrix_local.inverted()
+                self.BoneMatrix *= ArmatureObject.matrix_world.inverted()
+                self.BoneMatrix *= BlenderObject.matrix_world
 
-                def AddVertex(self, Index, Weight):
-                    self.Indices.append(Index)
-                    self.Weights.append(Weight)
+            def AddVertex(self, Index, Weight):
+                self.Indices.append(Index)
+                self.Weights.append(Weight)
 
         # Skin weights work well with vertex reuse per face.  Use a
         # _OneToOneMeshEnumerator if possible.
@@ -863,32 +872,33 @@ class MeshExportObject(ExportObject):
             MeshEnumerator = MeshExportObject._OneToOneMeshEnumerator(Mesh)
 
         ArmatureModifierList = [Modifier
-            for Modifier in self.BlenderObject.modifiers
-            if Modifier.type == 'ARMATURE' and Modifier.show_viewport]
+                                for Modifier in self.BlenderObject.modifiers
+                                if Modifier.type == 'ARMATURE' and Modifier.show_viewport]
 
         if not ArmatureModifierList:
             return
 
         # Although multiple armature objects are gathered, support for
         # multiple armatures per mesh is not complete
-        ArmatureObjects = [Modifier.object for Modifier in ArmatureModifierList]
+        ArmatureObjects = [
+            Modifier.object for Modifier in ArmatureModifierList]
 
         for ArmatureObject in ArmatureObjects:
             # Determine the names of the bone vertex groups
             PoseBoneNames = [Bone.name for Bone in ArmatureObject.pose.bones]
             VertexGroupNames = [Group.name for Group
-                in self.BlenderObject.vertex_groups]
+                                in self.BlenderObject.vertex_groups]
             UsedBoneNames = set(PoseBoneNames).intersection(VertexGroupNames)
 
             # Create a _BoneVertexGroup for each group name
             BoneVertexGroups = [_BoneVertexGroup(self.BlenderObject,
-                ArmatureObject, BoneName) for BoneName in UsedBoneNames]
+                                                 ArmatureObject, BoneName) for BoneName in UsedBoneNames]
 
             # Maps Blender's internal group indexing to our _BoneVertexGroups
-            GroupIndexToBoneVertexGroups = {Group.index : BoneVertexGroup
-                for Group in self.BlenderObject.vertex_groups
-                for BoneVertexGroup in BoneVertexGroups
-                if Group.name == BoneVertexGroup.BoneName}
+            GroupIndexToBoneVertexGroups = {Group.index: BoneVertexGroup
+                                            for Group in self.BlenderObject.vertex_groups
+                                            for BoneVertexGroup in BoneVertexGroups
+                                            if Group.name == BoneVertexGroup.BoneName}
 
             MaximumInfluences = 0
 
@@ -953,13 +963,16 @@ class MeshExportObject(ExportObject):
                         self.Exporter.File.Write(",\n", Indent=False)
 
                 # Write the bone's matrix.
-                Util.WriteMatrix(self.Exporter.File, BoneVertexGroup.BoneMatrix)
+                Util.WriteMatrix(self.Exporter.File,
+                                 BoneVertexGroup.BoneMatrix)
 
                 self.Exporter.File.Unindent()
-                self.Exporter.File.Write("}} // End of {} skin weights\n" \
-                    .format(BoneVertexGroup.SafeName))
+                self.Exporter.File.Write("}} // End of {} skin weights\n"
+                                         .format(BoneVertexGroup.SafeName))
 
 # Armature object implementation of ExportObject
+
+
 class ArmatureExportObject(ExportObject):
     def __init__(self, Prefs, Exporter, BlenderObject):
         ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
@@ -975,7 +988,8 @@ class ArmatureExportObject(ExportObject):
 
         if self.Prefs.ExportArmatureBones:
             Armature = self.BlenderObject.data
-            RootBones = [Bone for Bone in Armature.bones if Bone.parent is None]
+            RootBones = [
+                Bone for Bone in Armature.bones if Bone.parent is None]
             self.Exporter.Log("Writing frames for armature bones...")
             self.__WriteBones(RootBones)
             self.Exporter.Log("Done")
@@ -1012,7 +1026,6 @@ class ArmatureExportObject(ExportObject):
 
             self.__CloseBoneFrame(BoneSafeName)
 
-
     def __OpenBoneFrame(self, BoneSafeName, BoneMatrix):
         self.Exporter.File.Write("Frame {} {{\n".format(BoneSafeName))
         self.Exporter.File.Indent()
@@ -1048,7 +1061,7 @@ class Animation:
 
 # Creates a list of Animation objects based on the animation needs of the
 # ExportObject passed to it
-class AnimationGenerator: # Base class, do not use
+class AnimationGenerator:  # Base class, do not use
     def __init__(self, Prefs, SafeName, ExportObject):
         self.Prefs = Prefs
         self.SafeName = SafeName
@@ -1068,17 +1081,17 @@ class GenericAnimationGenerator(AnimationGenerator):
     # "Protected" Interface
 
     def _GenerateKeys(self):
-        Scene = bpy.context.scene # Convenience alias
+        Scene = bpy.context.scene  # Convenience alias
         BlenderCurrentFrame = Scene.frame_current
 
         CurrentAnimation = Animation(self.ExportObject.SafeName)
         BlenderObject = self.ExportObject.BlenderObject
 
-        if self.SafeName != None :
+        if self.SafeName != None:
             Index = bpy.data.actions.find(self.SafeName)
             TimeSection = copy(bpy.data.actions[Index].frame_range)
             TimeSection[1] = TimeSection[1]+1
-        else :
+        else:
             TimeSection = (Scene.frame_start, Scene.frame_end + 1)
 
         for Frame in range(int(TimeSection[0]), int(TimeSection[1])):
@@ -1111,11 +1124,11 @@ class GroupAnimationGenerator(AnimationGenerator):
         for Object in self.ExportObjects:
             if Object.BlenderObject.type == 'ARMATURE':
                 TemporaryGenerator = ArmatureAnimationGenerator(self.Prefs,
-                    None, Object)
+                                                                None, Object)
                 self.Animations += TemporaryGenerator.Animations
             else:
                 TemporaryGenerator = GenericAnimationGenerator(self.Prefs,
-                    None, Object)
+                                                               None, Object)
                 self.Animations += TemporaryGenerator.Animations
 
 
@@ -1124,7 +1137,7 @@ class GroupAnimationGenerator(AnimationGenerator):
 class ArmatureAnimationGenerator(GenericAnimationGenerator):
     def __init__(self, Prefs, SafeName, ArmatureExportObject):
         GenericAnimationGenerator.__init__(self, Prefs, SafeName,
-            ArmatureExportObject)
+                                           ArmatureExportObject)
 
         if self.Prefs.ExportArmatureBones:
             self._GenerateBoneKeys()
@@ -1134,15 +1147,15 @@ class ArmatureAnimationGenerator(GenericAnimationGenerator):
     def _GenerateBoneKeys(self):
         from itertools import zip_longest as zip
 
-        Scene = bpy.context.scene # Convenience alias
+        Scene = bpy.context.scene  # Convenience alias
         BlenderCurrentFrame = Scene.frame_current
 
         ArmatureObject = self.ExportObject.BlenderObject
         ArmatureSafeName = self.ExportObject.SafeName
 
         # Create Animation objects for each bone
-        BoneAnimations = [Animation(ArmatureSafeName + "_" + \
-            Util.SafeName(Bone.name)) for Bone in ArmatureObject.pose.bones]
+        BoneAnimations = [Animation(ArmatureSafeName + "_" +
+                                    Util.SafeName(Bone.name)) for Bone in ArmatureObject.pose.bones]
 
         Index = bpy.data.actions.find(self.SafeName)
         TimeSection = copy(bpy.data.actions[Index].frame_range)
@@ -1152,7 +1165,7 @@ class ArmatureAnimationGenerator(GenericAnimationGenerator):
             Scene.frame_set(Frame)
 
             for Bone, BoneAnimation in \
-                zip(ArmatureObject.pose.bones, BoneAnimations):
+                    zip(ArmatureObject.pose.bones, BoneAnimations):
 
                 PoseMatrix = Matrix()
                 if Bone.parent:
@@ -1230,8 +1243,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.RotationKeys):
                         self.Exporter.File.Write(
                             "{};4;{:9f},{:9f},{:9f},{:9f};;".format(
-                            Frame * self.Exporter.FpsMagnification,
-                             -Key[0], Key[1], Key[2], Key[3]))
+                                Frame * self.Exporter.FpsMagnification,
+                                -Key[0], Key[1], Key[2], Key[3]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)
@@ -1250,8 +1263,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.ScaleKeys):
                         self.Exporter.File.Write(
                             "{};3;{:9f},{:9f},{:9f};;".format(
-                            Frame * self.Exporter.FpsMagnification,
-                             Key[0], Key[1], Key[2]))
+                                Frame * self.Exporter.FpsMagnification,
+                                Key[0], Key[1], Key[2]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)
@@ -1270,8 +1283,8 @@ class AnimationWriter:
                     for Frame, Key in enumerate(CurrentAnimation.PositionKeys):
                         self.Exporter.File.Write(
                             "{};3;{:9f},{:9f},{:9f};;".format(
-                            Frame * self.Exporter.FpsMagnification,
-                             Key[0], Key[1], Key[2]))
+                                Frame * self.Exporter.FpsMagnification,
+                                Key[0], Key[1], Key[2]))
 
                         if Frame == KeyCount - 1:
                             self.Exporter.File.Write(";\n", Indent=False)
@@ -1294,7 +1307,7 @@ class AnimationWriter:
     # "Private" Methods
 
     def __WriteFrameRate(self):
-        Scene = bpy.context.scene # Convenience alias
+        Scene = bpy.context.scene  # Convenience alias
 
         # Calculate the integer frame rate
         FrameRate = int(Scene.render.fps / Scene.render.fps_base)
@@ -1307,6 +1320,8 @@ class AnimationWriter:
 
 # Implementation of AnimationWriter that sticks all generators into a
 # single AnimationSet
+
+
 class JoinedSetAnimationWriter(AnimationWriter):
     def __init__(self, Prefs, Exporter, AnimationGenerators):
         AnimationWriter.__init__(self, Prefs, Exporter, AnimationGenerators)
@@ -1315,12 +1330,14 @@ class JoinedSetAnimationWriter(AnimationWriter):
 
 # Implementation of AnimationWriter that puts each generator into its
 # own AnimationSet
+
+
 class SplitSetAnimationWriter(AnimationWriter):
     def __init__(self, Prefs, Exporter, AnimationGenerators):
         AnimationWriter.__init__(self, Prefs, Exporter, AnimationGenerators)
 
         self.AnimationSets = [AnimationSet(Generator.SafeName, [Generator])
-            for Generator in AnimationGenerators]
+                              for Generator in AnimationGenerators]
 
 
 # Interface to the file.  Supports automatic whitespace indenting.
@@ -1372,22 +1389,22 @@ class Util:
 
         NewName = ReplaceSet(Name, string.punctuation + " ", "_")
         if NewName[0].isdigit() or NewName.upper() in ["ARRAY", "DWORD",
-            "UCHAR", "FLOAT", "ULONGLONG", "BINARY_RESOURCE", "SDWORD",
-            "UNICODE", "CHAR", "STRING", "WORD", "CSTRING", "SWORD", "DOUBLE",
-            "TEMPLATE"]:
+                                                       "UCHAR", "FLOAT", "ULONGLONG", "BINARY_RESOURCE", "SDWORD",
+                                                       "UNICODE", "CHAR", "STRING", "WORD", "CSTRING", "SWORD", "DOUBLE",
+                                                       "TEMPLATE"]:
             NewName = "_" + NewName
         return NewName
 
     @staticmethod
     def WriteMatrix(File, Matrix):
         File.Write("{:9f},{:9f},{:9f},{:9f},\n".format(Matrix[0][0],
-            Matrix[1][0], Matrix[2][0], Matrix[3][0]))
+                                                       Matrix[1][0], Matrix[2][0], Matrix[3][0]))
         File.Write("{:9f},{:9f},{:9f},{:9f},\n".format(Matrix[0][1],
-            Matrix[1][1], Matrix[2][1], Matrix[3][1]))
+                                                       Matrix[1][1], Matrix[2][1], Matrix[3][1]))
         File.Write("{:9f},{:9f},{:9f},{:9f},\n".format(Matrix[0][2],
-            Matrix[1][2], Matrix[2][2], Matrix[3][2]))
+                                                       Matrix[1][2], Matrix[2][2], Matrix[3][2]))
         File.Write("{:9f},{:9f},{:9f},{:9f};;\n".format(Matrix[0][3],
-            Matrix[1][3], Matrix[2][3], Matrix[3][3]))
+                                                        Matrix[1][3], Matrix[2][3], Matrix[3][3]))
 
     # Used on lists of blender objects and lists of ExportObjects, both of
     # which have a name field

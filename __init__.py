@@ -21,8 +21,8 @@
 bl_info = {
     "name": "DirectX X Format",
     "author": "Bibindon",
-    "version": (0, 0, 1),
-    "blender": (2, 79, 0),
+    "version": (0, 0, 2),
+    "blender": (2, 80, 0),
     "location": "File > Export > DirectX (.x)",
     "description": "For personally customizing and using, this addon was "
                    "forked from official DirectX X format exporter"

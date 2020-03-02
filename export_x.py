@@ -32,7 +32,6 @@ class DirectXExporter:
     def __init__(self, Config, context):
         self.Config = Config
         self.context = context
-        self.Prefs = context.user_preferences.addons["io_scene_x2"].preferences
         self.StartTime = time.time()
 
         self.FpsMagnification = DIRECTX_ANIMATION_FPS // context.scene.render.fps
@@ -46,16 +45,16 @@ class DirectXExporter:
         # SystemMatrix converts from right-handed, z-up to the target coordinate system
         self.SystemMatrix = Matrix()
 
-        if self.Prefs.CoordinateSystem == 'LEFT_HANDED':
+        if self.Config.CoordinateSystem == 'LEFT_HANDED':
             self.SystemMatrix *= Matrix.Scale(-1, 4, Vector((0, 0, 1)))
 
-        if self.Prefs.UpAxis == 'Y':
+        if self.Config.UpAxis == 'Y':
             self.SystemMatrix *= Matrix.Rotation(radians(-90), 4, 'X')
 
         self.Log("Done")
 
         self.Log("Generating object lists for export...")
-        if self.Prefs.SelectedOnly:
+        if self.Config.SelectedOnly:
             ExportList = list(self.context.selected_objects)
         else:
             ExportList = list(self.context.scene.objects)
@@ -64,12 +63,12 @@ class DirectXExporter:
         ExportMap = {}
         for Object in ExportList:
             if Object.type == 'EMPTY':
-                ExportMap[Object] = EmptyExportObject(self.Prefs, self, Object)
+                ExportMap[Object] = EmptyExportObject(self.Config, self, Object)
             elif Object.type == 'MESH':
-                ExportMap[Object] = MeshExportObject(self.Prefs, self,
+                ExportMap[Object] = MeshExportObject(self.Config, self,
                                                      Object)
             elif Object.type == 'ARMATURE':
-                ExportMap[Object] = ArmatureExportObject(self.Prefs, self,
+                ExportMap[Object] = ArmatureExportObject(self.Config, self,
                                                          Object)
 
         # Find the objects who do not have a parent or whose parent we are
@@ -90,18 +89,18 @@ class DirectXExporter:
         self.Log("Done")
 
         self.AnimationWriter = None
-        if self.Prefs.ExportAnimation:
+        if self.Config.ExportAnimation:
             self.Log("Gathering animation data...")
 
             # Collect all animated object data
             AnimationGenerators = self.__GatherAnimationGenerators()
 
             # Split the data up into animation sets based on user options
-            if self.Prefs.ExportActionsAsSets:
-                self.AnimationWriter = SplitSetAnimationWriter(self.Prefs,
+            if self.Config.ExportActionsAsSets:
+                self.AnimationWriter = SplitSetAnimationWriter(self.Config,
                                                                self, AnimationGenerators)
             else:
-                self.AnimationWriter = JoinedSetAnimationWriter(self.Prefs,
+                self.AnimationWriter = JoinedSetAnimationWriter(self.Config,
                                                                 self, AnimationGenerators)
             self.Log("Done")
 
@@ -145,7 +144,7 @@ class DirectXExporter:
         self.Log("Done:{0:3.3f}".format(ProcessingTime) + "[sec]")
 
     def Log(self, String, MessageVerbose=True):
-        if self.Prefs.Verbose is True or MessageVerbose == False:
+        if self.Config.Verbose is True or MessageVerbose == False:
             print(String)
 
     # "Private" Methods
@@ -155,12 +154,12 @@ class DirectXExporter:
 
         # Write the headers that are required by some engines as needed
 
-        if self.Prefs.IncludeFrameRate:
+        if self.Config.IncludeFrameRate:
             self.File.Write("template AnimTicksPerSecond {\n\
   <9E415A43-7BA6-4a73-8743-B73D47E88476>\n\
   DWORD AnimTicksPerSecond;\n\
 }\n\n")
-        if self.Prefs.ExportSkinWeights:
+        if self.Config.ExportSkinWeights:
             self.File.Write("template XSkinMeshHeader {\n\
   <3cf169ce-ff7c-44ab-93c0-f78f62d172e2>\n\
   WORD nMaxSkinWeightsPerVertex;\n\
@@ -199,33 +198,33 @@ template SkinWeights {\n\
         Generators = []
 
         # If all animation data is to be lumped into one AnimationSet,
-        if not self.Prefs.ExportActionsAsSets:
+        if not self.Config.ExportActionsAsSets:
             # Build the appropriate generators for each object's type
             for Object in self.ExportList:
                 if Object.BlenderObject.type == 'ARMATURE':
-                    Generators.append(ArmatureAnimationGenerator(self.Prefs,
+                    Generators.append(ArmatureAnimationGenerator(self.Config,
                                                                  None, Object))
                 else:
-                    Generators.append(GenericAnimationGenerator(self.Prefs,
+                    Generators.append(GenericAnimationGenerator(self.Config,
                                                                 None, Object))
         # Otherwise,
         else:
             for Object in self.ExportList:
-                if not self.Prefs.ExportNLATrackAction:
+                if not self.Config.ExportNLATrackAction:
                     # If an object has an action, build its appropriate
                     # generator
                     if Object.BlenderObject.type == 'ARMATURE':
                         Generators.append(ArmatureAnimationGenerator(
-                            self.Prefs, Util.SafeName(Object.BlenderObject.
+                            self.Config, Util.SafeName(Object.BlenderObject.
                                                       animation_data.action.name), Object))
                     else:
                         Generators.append(GenericAnimationGenerator(
-                            self.Prefs, Util.SafeName(Object.BlenderObject.
+                            self.Config, Util.SafeName(Object.BlenderObject.
                                                       animation_data.action.name), Object))
 
             # If we should export NLA track actions as if the first armature
             # was using them,
-            if self.Prefs.ExportNLATrackAction:
+            if self.Config.ExportNLATrackAction:
                 # Find the first armature
                 FirstArmature = None
                 for Object in self.ExportList:
@@ -250,7 +249,7 @@ template SkinWeights {\n\
                         Mesh.BlenderObject.animation_data.action = Action
 
                         Generators.append(GenericAnimationGenerator(
-                            self.Prefs, Util.SafeName(Action.name), Mesh))
+                            self.Config, Util.SafeName(Action.name), Mesh))
                 else:
                     # Keep track of the first armature's animation data so we
                     # can restore it after export
@@ -269,7 +268,7 @@ template SkinWeights {\n\
                             Action
 
                         Generators.append(ArmatureAnimationGenerator(
-                            self.Prefs, Util.SafeName(Action.name),
+                            self.Config, Util.SafeName(Action.name),
                             FirstArmature))
 
                     # Restore old animation data
@@ -285,8 +284,8 @@ template SkinWeights {\n\
 
 
 class ExportObject:  # Base class, do not use
-    def __init__(self, Prefs, Exporter, BlenderObject):
-        self.Prefs = Prefs
+    def __init__(self, Config, Exporter, BlenderObject):
+        self.Config = Config
         self.Exporter = Exporter
         self.BlenderObject = BlenderObject
 
@@ -333,8 +332,8 @@ class ExportObject:  # Base class, do not use
 
 
 class EmptyExportObject(ExportObject):
-    def __init__(self, Prefs, Exporter, BlenderObject):
-        ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
+    def __init__(self, Config, Exporter, BlenderObject):
+        ExportObject.__init__(self, Config, Exporter, BlenderObject)
 
     def __repr__(self):
         return "[EmptyExportObject: {}]".format(self.name)
@@ -343,8 +342,8 @@ class EmptyExportObject(ExportObject):
 
 
 class MeshExportObject(ExportObject):
-    def __init__(self, Prefs, Exporter, BlenderObject):
-        ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
+    def __init__(self, Config, Exporter, BlenderObject):
+        ExportObject.__init__(self, Config, Exporter, BlenderObject)
 
     def __repr__(self):
         return "[MeshExportObject: {}]".format(self.name)
@@ -355,11 +354,11 @@ class MeshExportObject(ExportObject):
         self.Exporter.Log("Opening frame for {}".format(self))
         self._OpenFrame()
 
-        if self.Prefs.ExportMeshes:
+        if self.Config.ExportMeshes:
             self.Exporter.Log("Generating mesh for export...")
             # Generate the export mesh
             Mesh = None
-            if self.Prefs.ApplyModifiers:
+            if self.Config.ApplyModifiers:
                 # Certain modifiers shouldn't be applied in some cases
                 # Deactivate them until after mesh generation is complete
 
@@ -367,7 +366,7 @@ class MeshExportObject(ExportObject):
 
                 # If we're exporting armature data, we shouldn't apply
                 # armature modifiers to the mesh
-                if self.Prefs.ExportSkinWeights:
+                if self.Config.ExportSkinWeights:
                     DeactivatedModifierList = [Modifier
                                                for Modifier in self.BlenderObject.modifiers
                                                if Modifier.type == 'ARMATURE' and
@@ -376,21 +375,19 @@ class MeshExportObject(ExportObject):
                 for Modifier in DeactivatedModifierList:
                     Modifier.show_viewport = False
 
-                Mesh = self.BlenderObject.to_mesh(self.Exporter.context.scene,
-                                                  True, 'PREVIEW')
+                depsgraph = self.Exporter.context.evaluated_depsgraph_get()
+                Mesh = self.BlenderObject.evaluated_get(depsgraph).to_mesh()
 
                 # Restore the deactivated modifiers
                 for Modifier in DeactivatedModifierList:
                     Modifier.show_viewport = True
             else:
-                Mesh = self.BlenderObject.to_mesh(self.Exporter.context.scene,
-                                                  False, 'PREVIEW')
+                depsgraph = self.Exporter.context.evaluated_depsgraph_get()
+                Mesh = self.BlenderObject.evaluated_get(depsgraph).to_mesh()
+                
             self.Exporter.Log("Done")
 
             self.__WriteMesh(Mesh)
-
-            # Cleanup
-            bpy.data.meshes.remove(Mesh)
 
         self.Exporter.Log("Writing children of {}".format(self))
         self._WriteChildren()
@@ -454,9 +451,9 @@ class MeshExportObject(ExportObject):
 
         # Create the mesh enumerator based on options
         MeshEnumerator = None
-        if (self.Prefs.ExportUVCoordinates and Mesh.uv_textures) or \
-            (self.Prefs.ExportVertexColors and Mesh.vertex_colors) or \
-                (self.Prefs.ExportSkinWeights):
+        if (self.Config.ExportUVCoordinates and Mesh.uv_layers) or \
+            (self.Config.ExportVertexColors and Mesh.vertex_colors) or \
+                (self.Config.ExportSkinWeights):
             MeshEnumerator = MeshExportObject._UnrolledFacesMeshEnumerator(
                 Mesh)
         else:
@@ -483,7 +480,7 @@ class MeshExportObject(ExportObject):
 
             self.Exporter.File.Write("{};".format(len(PolygonVertexIndices)))
 
-            if self.Prefs.CoordinateSystem == 'LEFT_HANDED':
+            if self.Config.CoordinateSystem == 'LEFT_HANDED':
                 PolygonVertexIndices = PolygonVertexIndices[::-1]
 
             for VertexCountIndex, VertexIndex in \
@@ -504,19 +501,19 @@ class MeshExportObject(ExportObject):
 
         # Write the other mesh components
 
-        if self.Prefs.ExportNormals:
+        if self.Config.ExportNormals:
             self.Exporter.Log("Writing mesh normals...")
             self.__WriteMeshNormals(Mesh)
             self.Exporter.Log("Done")
 
-        if self.Prefs.ExportUVCoordinates:
+        if self.Config.ExportUVCoordinates:
             self.Exporter.Log("Writing mesh UV coordinates...")
             self.__WriteMeshUVCoordinates(Mesh)
             self.Exporter.Log("Done")
 
-        if self.Prefs.ExportMaterials:
+        if self.Config.ExportMaterials:
             self.Exporter.Log("Writing mesh materials...")
-            if self.Prefs.ExportActiveImageMaterials:
+            if self.Config.ExportActiveImageMaterials:
                 self.Exporter.Log("Referencing active images instead of "
                                   "material image textures.")
                 self.__WriteMeshActiveImageMaterials(Mesh)
@@ -524,12 +521,12 @@ class MeshExportObject(ExportObject):
                 self.__WriteMeshMaterials(Mesh)
             self.Exporter.Log("Done")
 
-        if self.Prefs.ExportVertexColors:
+        if self.Config.ExportVertexColors:
             self.Exporter.Log("Writing mesh vertex colors...")
             self.__WriteMeshVertexColors(Mesh, MeshEnumerator=MeshEnumerator)
             self.Exporter.Log("Done")
 
-        if self.Prefs.ExportSkinWeights:
+        if self.Config.ExportSkinWeights:
             self.Exporter.Log("Writing mesh skin weights...")
             self.__WriteMeshSkinWeights(Mesh, MeshEnumerator=MeshEnumerator)
             self.Exporter.Log("Done")
@@ -578,7 +575,7 @@ class MeshExportObject(ExportObject):
         # Write mesh normals.
         for Index, Vertex in enumerate(MeshEnumerator.vertices):
             Normal = Vertex.normal
-            if self.Prefs.FlipNormals:
+            if self.Config.FlipNormals:
                 Normal = -1.0 * Vertex.normal
 
             self.Exporter.File.Write("{:9f};{:9f};{:9f};".format(Normal[0],
@@ -595,7 +592,7 @@ class MeshExportObject(ExportObject):
         for Index, Polygon in enumerate(MeshEnumerator.PolygonVertexIndices):
             self.Exporter.File.Write("{};".format(len(Polygon)))
 
-            if self.Prefs.CoordinateSystem == 'LEFT_HANDED':
+            if self.Config.CoordinateSystem == 'LEFT_HANDED':
                 Polygon = Polygon[::-1]
 
             for VertexCountIndex, VertexIndex in enumerate(Polygon):
@@ -616,7 +613,7 @@ class MeshExportObject(ExportObject):
             self.SafeName))
 
     def __WriteMeshUVCoordinates(self, Mesh):
-        if not Mesh.uv_textures:
+        if not Mesh.uv_layers:
             return
 
         self.Exporter.File.Write("MeshTextureCoords {{ // {} UV coordinates\n"
@@ -774,7 +771,7 @@ class MeshExportObject(ExportObject):
 
         for Index, Polygon in enumerate(Mesh.polygons):
             MaterialKey = GetMaterialKey(Materials[Polygon.material_index],
-                                         Mesh.uv_textures.active, Index)
+                                         Mesh.uv_layers.active, Index)
 
             if MaterialKey in MaterialIndexMap:
                 MaterialIndices[Index] = MaterialIndexMap[MaterialKey]
@@ -974,8 +971,8 @@ class MeshExportObject(ExportObject):
 
 
 class ArmatureExportObject(ExportObject):
-    def __init__(self, Prefs, Exporter, BlenderObject):
-        ExportObject.__init__(self, Prefs, Exporter, BlenderObject)
+    def __init__(self, Config, Exporter, BlenderObject):
+        ExportObject.__init__(self, Config, Exporter, BlenderObject)
 
     def __repr__(self):
         return "[ArmatureExportObject: {}]".format(self.name)
@@ -986,7 +983,7 @@ class ArmatureExportObject(ExportObject):
         self.Exporter.Log("Opening frame for {}".format(self))
         self._OpenFrame()
 
-        if self.Prefs.ExportArmatureBones:
+        if self.Config.ExportArmatureBones:
             Armature = self.BlenderObject.data
             RootBones = [
                 Bone for Bone in Armature.bones if Bone.parent is None]
@@ -1008,7 +1005,7 @@ class ArmatureExportObject(ExportObject):
         for Bone in Bones:
             BoneMatrix = Matrix()
 
-            if self.Prefs.ExportRestBone:
+            if self.Config.ExportRestBone:
                 if Bone.parent:
                     BoneMatrix = Bone.parent.matrix_local.inverted()
                 BoneMatrix *= Bone.matrix_local
@@ -1062,8 +1059,8 @@ class Animation:
 # Creates a list of Animation objects based on the animation needs of the
 # ExportObject passed to it
 class AnimationGenerator:  # Base class, do not use
-    def __init__(self, Prefs, SafeName, ExportObject):
-        self.Prefs = Prefs
+    def __init__(self, Config, SafeName, ExportObject):
+        self.Config = Config
         self.SafeName = SafeName
         self.ExportObject = ExportObject
 
@@ -1073,8 +1070,8 @@ class AnimationGenerator:  # Base class, do not use
 # Creates one Animation object that contains the rotation, scale, and position
 # of the ExportObject
 class GenericAnimationGenerator(AnimationGenerator):
-    def __init__(self, Prefs, SafeName, ExportObject):
-        AnimationGenerator.__init__(self, Prefs, SafeName, ExportObject)
+    def __init__(self, Config, SafeName, ExportObject):
+        AnimationGenerator.__init__(self, Config, SafeName, ExportObject)
 
         self._GenerateKeys()
 
@@ -1112,8 +1109,8 @@ class GenericAnimationGenerator(AnimationGenerator):
 # Creates one Animation object for each of the ExportObjects it gets passed.
 # Essentially a bunch of GenericAnimationGenerators lumped into one.
 class GroupAnimationGenerator(AnimationGenerator):
-    def __init__(self, Prefs, SafeName, ExportObjects):
-        AnimationGenerator.__init__(self, Prefs, SafeName, None)
+    def __init__(self, Config, SafeName, ExportObjects):
+        AnimationGenerator.__init__(self, Config, SafeName, None)
         self.ExportObjects = ExportObjects
 
         self._GenerateKeys()
@@ -1123,11 +1120,11 @@ class GroupAnimationGenerator(AnimationGenerator):
     def _GenerateKeys(self):
         for Object in self.ExportObjects:
             if Object.BlenderObject.type == 'ARMATURE':
-                TemporaryGenerator = ArmatureAnimationGenerator(self.Prefs,
+                TemporaryGenerator = ArmatureAnimationGenerator(self.Config,
                                                                 None, Object)
                 self.Animations += TemporaryGenerator.Animations
             else:
-                TemporaryGenerator = GenericAnimationGenerator(self.Prefs,
+                TemporaryGenerator = GenericAnimationGenerator(self.Config,
                                                                None, Object)
                 self.Animations += TemporaryGenerator.Animations
 
@@ -1135,11 +1132,11 @@ class GroupAnimationGenerator(AnimationGenerator):
 # Creates an Animation object for the ArmatureExportObject it gets passed and
 # an Animation object for each bone in the armature (if options allow)
 class ArmatureAnimationGenerator(GenericAnimationGenerator):
-    def __init__(self, Prefs, SafeName, ArmatureExportObject):
-        GenericAnimationGenerator.__init__(self, Prefs, SafeName,
+    def __init__(self, Config, SafeName, ArmatureExportObject):
+        GenericAnimationGenerator.__init__(self, Config, SafeName,
                                            ArmatureExportObject)
 
-        if self.Prefs.ExportArmatureBones:
+        if self.Config.ExportArmatureBones:
             self._GenerateBoneKeys()
 
     # "Protected" Interface
@@ -1199,8 +1196,8 @@ class AnimationSet:
 # Writes all animation data to file.  Implementations will control the
 # separation of AnimationGenerators into distinct AnimationSets.
 class AnimationWriter:
-    def __init__(self, Prefs, Exporter, AnimationGenerators):
-        self.Prefs = Prefs
+    def __init__(self, Config, Exporter, AnimationGenerators):
+        self.Config = Config
         self.Exporter = Exporter
         self.AnimationGenerators = AnimationGenerators
 
@@ -1211,7 +1208,7 @@ class AnimationWriter:
     # Writes all AnimationSets.  Implementations probably won't have to override
     # this method.
     def WriteAnimationSets(self):
-        if self.Prefs.IncludeFrameRate:
+        if self.Config.IncludeFrameRate:
             self.Exporter.Log("Writing frame rate...")
             self.__WriteFrameRate()
             self.Exporter.Log("Done")
@@ -1323,8 +1320,8 @@ class AnimationWriter:
 
 
 class JoinedSetAnimationWriter(AnimationWriter):
-    def __init__(self, Prefs, Exporter, AnimationGenerators):
-        AnimationWriter.__init__(self, Prefs, Exporter, AnimationGenerators)
+    def __init__(self, Config, Exporter, AnimationGenerators):
+        AnimationWriter.__init__(self, Config, Exporter, AnimationGenerators)
 
         self.AnimationSets = [AnimationSet("Global", self.AnimationGenerators)]
 
@@ -1333,8 +1330,8 @@ class JoinedSetAnimationWriter(AnimationWriter):
 
 
 class SplitSetAnimationWriter(AnimationWriter):
-    def __init__(self, Prefs, Exporter, AnimationGenerators):
-        AnimationWriter.__init__(self, Prefs, Exporter, AnimationGenerators)
+    def __init__(self, Config, Exporter, AnimationGenerators):
+        AnimationWriter.__init__(self, Config, Exporter, AnimationGenerators)
 
         self.AnimationSets = [AnimationSet(Generator.SafeName, [Generator])
                               for Generator in AnimationGenerators]

@@ -44,7 +44,114 @@ class ExportDirectX2(bpy.types.Operator):
     bl_idname = "export_scene.x"
     bl_label = "Export DirectX"
 
-    filepath = StringProperty(subtype='FILE_PATH')
+    filepath = StringProperty(
+        subtype='FILE_PATH')
+
+    SelectedOnly = BoolProperty(
+        name="Export Selected Objects Only",
+        description="Export only selected objects",
+        default=True)
+
+    CoordinateSystem = EnumProperty(
+        name="Coordinate System",
+        description="Use the selected coordinate system for export",
+        items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
+               ('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
+        default='RIGHT_HANDED')
+
+    UpAxis = EnumProperty(
+        name="Up Axis",
+        description="The selected axis points upward",
+        items=(('Y', "Y", "The Y axis points up"),
+               ('Z', "Z", "The Z axis points up")),
+        default='Z')
+
+    ExportMeshes = BoolProperty(
+        name="Export Meshes",
+        description="Export mesh objects",
+        default=True)
+
+    ExportNormals = BoolProperty(
+        name="Export Normals",
+        description="Export mesh normals",
+        default=True)
+
+    FlipNormals = BoolProperty(
+        name="Flip Normals",
+        description="Flip mesh normals before export",
+        default=False)
+
+    ExportUVCoordinates = BoolProperty(
+        name="Export UV Coordinates",
+        description="Export mesh UV coordinates, if any",
+        default=True)
+
+    ExportMaterials = BoolProperty(
+        name="Export Materials",
+        description="Export material properties and reference image textures",
+        default=True)
+
+    ExportActiveImageMaterials = BoolProperty(
+        name="Reference Active Images as Textures",
+        description="Reference the active image of each face as a texture, "
+            "as opposed to the image assigned to the material",
+        default=False)
+
+    ExportVertexColors = BoolProperty(
+        name="Export Vertex Colors",
+        description="Export mesh vertex colors, if any",
+        default=False)
+
+    ExportSkinWeights = BoolProperty(
+        name="Export Skin Weights",
+        description="Bind mesh vertices to armature bones",
+        default=False)
+
+    ApplyModifiers = BoolProperty(
+        name="Apply Modifiers",
+        description="Apply the effects of object modifiers before export",
+        default=False)
+
+    ExportArmatureBones = BoolProperty(
+        name="Export Armature Bones",
+        description="Export armatures bones",
+        default=False)
+
+    ExportRestBone = BoolProperty(
+        name="Export Rest Position",
+        description="Export bones in their rest position (recommended for "
+            "animation)",
+        default=False)
+
+    ExportAnimation = BoolProperty(
+        name="Export Animations",
+        description="Export object and bone animations.  Data is exported for "
+            "every frame",
+        default=False)
+
+    IncludeFrameRate = BoolProperty(
+        name="Include Frame Rate",
+        description="Include the AnimTicksPerSecond template which is "
+            "used by some engines to control animation speed",
+        default=False)
+
+    ExportActionsAsSets = BoolProperty(
+        name="Export Actions as AnimationSets",
+        description="Export each action of each object as a separate "
+            "AnimationSet. Otherwise all current actions are lumped "
+            "together into a single set",
+        default=False)
+
+    ExportNLATrackAction = BoolProperty(
+        name="Export NLA track Actions",
+        description="Export NLA track actions",
+        default=False)
+
+    Verbose = BoolProperty(
+        name="Verbose",
+        description="Run the exporter in debug mode. Check the console for "
+            "output",
+        default=False)
 
     def execute(self, context):
         self.filepath = bpy.path.ensure_ext(self.filepath, ".x")
@@ -59,146 +166,9 @@ class ExportDirectX2(bpy.types.Operator):
         context.window_manager.fileselect_add(self)
         return {'RUNNING_MODAL'}
 
-
-class ExportDirectX2_Preferences(bpy.types.AddonPreferences):
-    bl_idname = __name__
-
-    # Export options
-
-    SelectedOnly = BoolProperty(
-        name="Export Selected Objects Only",
-        description="Export only selected objects",
-        default=True)
-
-    CoordinateSystem = EnumProperty(
-        name="Coordinate System",
-        description="Use the selected coordinate system for export",
-        items=(('LEFT_HANDED', "Left-Handed", "Use a Y up, Z forward system or a Z up, -Y forward system"),
-               ('RIGHT_HANDED', "Right-Handed", "Use a Y up, -Z forward system or a Z up, Y forward system")),
-        default='LEFT_HANDED')
-
-    UpAxis = EnumProperty(
-        name="Up Axis",
-        description="The selected axis points upward",
-        items=(('Y', "Y", "The Y axis points up"),
-               ('Z', "Z", "The Z axis points up")),
-        default='Y')
-
-    ExportMeshes = BoolProperty(
-        name="Export Meshes",
-        description="Export mesh objects",
-        default=True)
-
-    ExportNormals = BoolProperty(
-        name="    Export Normals",
-        description="Export mesh normals",
-        default=True)
-
-    FlipNormals = BoolProperty(
-        name="        Flip Normals",
-        description="Flip mesh normals before export",
-        default=False)
-
-    ExportUVCoordinates = BoolProperty(
-        name="    Export UV Coordinates",
-        description="Export mesh UV coordinates, if any",
-        default=True)
-
-    ExportMaterials = BoolProperty(
-        name="    Export Materials",
-        description="Export material properties and reference image textures",
-        default=True)
-
-    ExportActiveImageMaterials = BoolProperty(
-        name="        Reference Active Images as Textures",
-        description="Reference the active image of each face as a texture, "
-            "as opposed to the image assigned to the material",
-        default=False)
-
-    ExportVertexColors = BoolProperty(
-        name="    Export Vertex Colors",
-        description="Export mesh vertex colors, if any",
-        default=False)
-
-    ExportSkinWeights = BoolProperty(
-        name="    Export Skin Weights",
-        description="Bind mesh vertices to armature bones",
-        default=False)
-
-    ApplyModifiers = BoolProperty(
-        name="    Apply Modifiers",
-        description="Apply the effects of object modifiers before export",
-        default=False)
-
-    ExportArmatureBones = BoolProperty(
-        name="Export Armature Bones",
-        description="Export armatures bones",
-        default=False)
-
-    ExportRestBone = BoolProperty(
-        name="    Export Rest Position",
-        description="Export bones in their rest position (recommended for "
-            "animation)",
-        default=False)
-
-    ExportAnimation = BoolProperty(
-        name="Export Animations",
-        description="Export object and bone animations.  Data is exported for "
-            "every frame",
-        default=False)
-
-    IncludeFrameRate = BoolProperty(
-        name="    Include Frame Rate",
-        description="Include the AnimTicksPerSecond template which is "
-            "used by some engines to control animation speed",
-        default=False)
-
-    ExportActionsAsSets = BoolProperty(
-        name="    Export Actions as AnimationSets",
-        description="Export each action of each object as a separate "
-            "AnimationSet. Otherwise all current actions are lumped "
-            "together into a single set",
-        default=False)
-
-    ExportNLATrackAction = BoolProperty(
-        name="        Export NLA track Actions",
-        description="Export NLA track actions",
-        default=False)
-
-    Verbose = BoolProperty(
-        name="Verbose",
-        description="Run the exporter in debug mode. Check the console for "
-            "output",
-        default=False)
-
-    def draw(self, context):
-        layout = self.layout
-
-        layout.prop(self, "SelectedOnly")
-        layout.prop(self, "CoordinateSystem")
-        layout.prop(self, "UpAxis")
-        layout.prop(self, "ExportMeshes")
-        layout.prop(self, "ExportNormals")
-        layout.prop(self, "FlipNormals")
-        layout.prop(self, "ExportUVCoordinates")
-        layout.prop(self, "ExportMaterials")
-        layout.prop(self, "ExportActiveImageMaterials")
-        layout.prop(self, "ExportVertexColors")
-        layout.prop(self, "ExportSkinWeights")
-        layout.prop(self, "ApplyModifiers")
-        layout.prop(self, "ExportArmatureBones")
-        layout.prop(self, "ExportRestBone")
-        layout.prop(self, "ExportAnimation")
-        layout.prop(self, "IncludeFrameRate")
-        layout.prop(self, "ExportActionsAsSets")
-        layout.prop(self, "ExportNLATrackAction")
-        layout.prop(self, "Verbose")
-
-
 def menu_func(self, context):
     self.layout.operator(ExportDirectX2.bl_idname,
                          text="DirectX (.x)").filepath = "*.x"
-
 
 def register():
     bpy.utils.register_class(ExportDirectX2)

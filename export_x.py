@@ -969,7 +969,6 @@ class MeshExportObject(ExportObject):
 
 # Armature object implementation of ExportObject
 
-
 class ArmatureExportObject(ExportObject):
     def __init__(self, Config, Exporter, BlenderObject):
         ExportObject.__init__(self, Config, Exporter, BlenderObject)

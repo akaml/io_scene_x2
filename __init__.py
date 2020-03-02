@@ -24,13 +24,11 @@ from . import export_x
 
 bl_info = {
     "name": "DirectX X Format",
-    "author": "Bibindon, fx137",
-    "version": (0, 0, 2),
+    "author": "fx137, Bibindon",
+    "version": (0, 0, 3),
     "blender": (2, 80, 0),
     "location": "File > Export > DirectX (.x)",
-    "description": "For personally customizing and using, this addon was "
-                   "forked from official DirectX X format exporter"
-                   "(https://github.com/cdbfoster/io_scene_x).",
+    "description": "Migrated to 2.8 from (https://github.com/bibindon/io_scene_x2)",
     "support": "TESTING",
     "category": "Import-Export"}
 
@@ -38,7 +36,7 @@ if "bpy" in locals():
     import imp
     imp.reload(export_x)
 
-class ExportDirectX2(bpy.types.Operator):
+class ExportDirectX(bpy.types.Operator):
     """Export selection to DirectX"""
 
     bl_idname = "export_scene.x"
@@ -149,8 +147,7 @@ class ExportDirectX2(bpy.types.Operator):
 
     Verbose = BoolProperty(
         name="Verbose",
-        description="Run the exporter in debug mode. Check the console for "
-            "output",
+        description="Run the exporter in debug mode. Check the console for output",
         default=False)
 
     def execute(self, context):
@@ -167,16 +164,16 @@ class ExportDirectX2(bpy.types.Operator):
         return {'RUNNING_MODAL'}
 
 def menu_func(self, context):
-    self.layout.operator(ExportDirectX2.bl_idname,
+    self.layout.operator(ExportDirectX.bl_idname,
                          text="DirectX (.x)").filepath = "*.x"
 
 def register():
-    bpy.utils.register_class(ExportDirectX2)
+    bpy.utils.register_class(ExportDirectX)
     bpy.types.TOPBAR_MT_file_export.append(menu_func)
 
 
 def unregister():
-    bpy.utils.unregister_class(ExportDirectX2)
+    bpy.utils.unregister_class(ExportDirectX)
     bpy.types.TOPBAR_MT_file_export.remove(menu_func)
 
 

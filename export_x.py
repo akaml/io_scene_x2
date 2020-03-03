@@ -649,32 +649,13 @@ class MeshExportObject(ExportObject):
 
     def __WriteMeshMaterials(self, Mesh):
         def WriteMaterial(Exporter, Material):
-            def GetMaterialTextureFileName(Material):
-                if Material:
-                    # Create a list of Textures that have type 'IMAGE'
-                    ImageTextures = [Material.texture_slots[TextureSlot].texture
-                                     for TextureSlot in Material.texture_slots.keys()
-                                     if Material.texture_slots[TextureSlot].texture.type ==
-                                     'IMAGE']
-                    # Refine to only image file names if applicable
-                    ImageFiles = [bpy.path.basename(Texture.image.filepath)
-                                  for Texture in ImageTextures
-                                  if getattr(Texture.image, "source", "") == 'FILE']
-                    if ImageFiles:
-                        return ImageFiles[0]
-                return None
-
             Exporter.File.Write("Material {} {{\n".format(
                 Util.SafeName(Material.name)))
             Exporter.File.Indent()
 
-            Diffuse = list(Vector(Material.diffuse_color) *
-                           Material.diffuse_intensity)
-            Diffuse.append(Material.alpha)
-            # Map Blender's range of 1 - 511 to 0 - 1000
-            Specularity = 1000 * (Material.specular_hardness - 1.0) / 510.0
-            Specular = list(Vector(Material.specular_color) *
-                            Material.specular_intensity)
+            Diffuse = list(Vector(Material.diffuse_color))
+            Specularity = 0
+            Specular = list(Vector(Material.specular_color))
 
             Exporter.File.Write("{:9f};{:9f};{:9f};{:9f};;\n".format(Diffuse[0],
                                                                      Diffuse[1], Diffuse[2], Diffuse[3]))
@@ -682,12 +663,6 @@ class MeshExportObject(ExportObject):
             Exporter.File.Write("{:9f};{:9f};{:9f};;\n".format(Specular[0],
                                                                Specular[1], Specular[2]))
             Exporter.File.Write(" 0.000000; 0.000000; 0.000000;;\n")
-
-            TextureFileName = GetMaterialTextureFileName(Material)
-            if TextureFileName:
-                Exporter.File.Write("TextureFilename {{\"{}\";}}\n".format(
-                    TextureFileName))
-
             Exporter.File.Unindent()
             Exporter.File.Write("}\n")
 
@@ -726,13 +701,10 @@ class MeshExportObject(ExportObject):
                 Util.SafeName(Material.name)))
             Exporter.File.Indent()
 
-            Diffuse = list(Vector(Material.diffuse_color) *
-                           Material.diffuse_intensity)
-            Diffuse.append(Material.alpha)
+            Diffuse = list(Vector(Material.diffuse_color))
             # Map Blender's range of 1 - 511 to 0 - 1000
-            Specularity = 1000 * (Material.specular_hardness - 1.0) / 510.0
-            Specular = list(Vector(Material.specular_color) *
-                            Material.specular_intensity)
+            Specularity = 0
+            Specular = list(Vector(Material.specular_color))
 
             Exporter.File.Write("{:9f};{:9f};{:9f};{:9f};;\n".format(Diffuse[0],
                                                                      Diffuse[1], Diffuse[2], Diffuse[3]))

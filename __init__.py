@@ -18,7 +18,8 @@
 
 # <pep8 compliant>
 
-import bpy
+import sys, os, bpy
+sys.path.append(os.path.dirname(__file__)) 
 from bpy.props import StringProperty, BoolProperty, EnumProperty
 from . import export_x
 
